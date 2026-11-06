@@ -11,17 +11,9 @@ class ImageApplication(wx.App):
             config.initialize_client()
 
             if config.client is None:
-                dialog = APIKeyDialog(None)
-                result = dialog.ShowModal()
-                dialog.Destroy()
-
-                if result != wx.ID_OK or config.client is None:
-                    return False
-
-            from .main_window import MainFrame
-
-            frame = MainFrame()
-            frame.Show()
+                wx.CallAfter(self.prompt_for_api_key)
+            else:
+                self.show_main_window()
 
             return True
 
@@ -34,3 +26,23 @@ class ImageApplication(wx.App):
             )
 
             return False
+
+    def prompt_for_api_key(self):
+        dialog = APIKeyDialog(None)
+
+        try:
+            result = dialog.ShowModal()
+        finally:
+            dialog.Destroy()
+
+        if result == wx.ID_OK and config.client is not None:
+            self.show_main_window()
+            return
+
+        self.ExitMainLoop()
+
+    def show_main_window(self):
+        from .main_window import MainFrame
+
+        self.frame = MainFrame()
+        self.frame.Show()
